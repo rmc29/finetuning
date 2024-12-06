@@ -41,15 +41,12 @@ const FINE_TUNED_MODEL_NAME = "Fine-Tuned Text Generator";
 const register_checks = async (okareo: Okareo, project_id: string, required_checks: CHECK_TYPE[]): Promise<any> => {
     const checks = await okareo.get_all_checks();
     try {
-        for (const demo_check of required_checks) {
-            const isReg: boolean = (checks.filter((c) => c.name === demo_check.name).length > 0);
-            if (!isReg || demo_check.update === true) {
-                console.log(`Creating Check ${demo_check.name}.`);
-                const new_check = await addCheck(okareo, project_id, demo_check);
-                console.log(`Check ${demo_check.name} has been created and is now available.`);
-            } else {
-                console.log(`Check ${demo_check.name} is available. No need to add it again`);
-            }
+        for (const demo_check of required_checks) {            
+            
+			console.log(`Creating Check ${demo_check.name}.`);
+			const new_check = await addCheck(okareo, project_id, demo_check);
+			console.log(`Check ${demo_check.name} has been created and is now available.`);
+           
         }
     } catch (e) {
         if (e instanceof Error) {
