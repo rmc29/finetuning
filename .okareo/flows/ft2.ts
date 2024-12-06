@@ -41,12 +41,15 @@ const FINE_TUNED_MODEL_NAME = "Fine-Tuned Text Generator";
 const register_checks = async (okareo: Okareo, project_id: string, required_checks: CHECK_TYPE[]): Promise<any> => {
     const checks = await okareo.get_all_checks();
     try {
-        for (const demo_check of required_checks) {            
-            
-			console.log(`Creating Check ${demo_check.name}.`);
-			const new_check = await addCheck(okareo, project_id, demo_check);
-			console.log(`Check ${demo_check.name} has been created and is now available.`);
-           
+        for (const demo_check of required_checks) {
+            const isReg: boolean = (checks.filter((c) => c.name === demo_check.name).length > 0);
+            if (!isReg || demo_check.update === true) {
+                console.log(`Creating Check ${demo_check.name}.`);
+                const new_check = await addCheck(okareo, project_id, demo_check);
+                console.log(`Check ${demo_check.name} has been created and is now available.`);
+            } else {
+                console.log(`Check ${demo_check.name} is available. No need to add it again`);
+            }
         }
     } catch (e) {
         if (e instanceof Error) {
@@ -169,15 +172,37 @@ const main = async () => {
 				
 				
 				{
-					name:"custom.Archaic", 
+					name:"custom.Archaic.fewshot", 
 					description: "Use LLM-as-a-judge to rate how archaic the output is.",
-					prompt: "Output a score for how archaic the writing style of the following text is, on a scale of 1 (most modern) to 5 (most archaic). {output}",
+					prompt: "Output a score for how archaic the writing style is, on a scale of 1 (most modern) to 5 (most archaic). \
+							Example 1 model answer: \
+							The sky appears blue because of the way sunlight interacts with Earth's atmosphere. When sunlight reaches Earth, it is made up of a spectrum of colors, with shorter wavelengths like blue and violet being scattered more easily by the gases and particles in the atmosphere. This scattering causes the blue light to be more visible to our eyes, giving the sky its blue color. \
+							Archaic Writing Style Score: 1 \
+							Example 2 model answer: \
+							Why is the sky blue? Why is the world \
+							At endless strife with the spirit of man? \
+							Why do the stars in their courses whirl, \
+							And the planets and suns in their cycles plan \
+							The doom of the earth and the fate of man? \
+							Why is the sky blue? \
+							Archaic Writing Style Score: 4",
 					output_data_type: CheckOutputType.SCORE,
 				},
 				{
-					name:"custom.Poetic", 
-					description: "Use LLM-as-a-judge to rate how poetic the output is.",
-					prompt: "Output a score for how poetic the writing style of the following text is, on a scale of 1 (most prosaic and ordinary) to 5 (most poetic). {output}",
+					name:"custom.Poetic.fewshot", 
+					description: "Use LLM-as-a-judge to rate how poetic the output is. ",
+					prompt: "Output a score for how poetic the writing style is, on a scale of 1 (most prosaic and ordinary) to 5 (most poetic). Poetic devices can include rhythm and meter, simile and metaphor, rhetorical questions, repetition, alliteration, elevated diction, and so on. \
+					Example 1 model answer: \
+							The sky appears blue because of the way sunlight interacts with Earth's atmosphere. When sunlight reaches Earth, it is made up of a spectrum of colors, with shorter wavelengths like blue and violet being scattered more easily by the gases and particles in the atmosphere. This scattering causes the blue light to be more visible to our eyes, giving the sky its blue color. \
+							Poetic Writing Style Score: 1 \
+							Example 2 model answer: \
+							Why is the sky blue? Why is the world \
+							At endless strife with the spirit of man? \
+							Why do the stars in their courses whirl, \
+							And the planets and suns in their cycles plan \
+							The doom of the earth and the fate of man? \
+							Why is the sky blue? \
+							Poetic Writing Style Score: 5",
 					output_data_type: CheckOutputType.SCORE,
 				},
 			];
