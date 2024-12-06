@@ -182,7 +182,10 @@ const main = async () => {
 							And the planets and suns in their cycles plan \
 							The doom of the earth and the fate of man? \
 							Why is the sky blue? \
-							Archaic Writing Style Score: 4",
+							Archaic Writing Style Score: 4 \
+							Example 3 model answer: \
+							{output} \
+							Archaic Writing Style Score:",
 					output_data_type: CheckOutputType.SCORE,
 				},
 				{
@@ -199,7 +202,10 @@ const main = async () => {
 							And the planets and suns in their cycles plan \
 							The doom of the earth and the fate of man? \
 							Why is the sky blue? \
-							Poetic Writing Style Score: 5",
+							Poetic Writing Style Score: 5 \
+							Example 3 model answer: \
+							{output} \
+							Poetic Writing Style Score:",
 					output_data_type: CheckOutputType.SCORE,
 				},
 			];
