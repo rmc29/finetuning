@@ -7,12 +7,9 @@ import {
     OpenAIModel,
 	CheckOutputType,
     GenerationReporter,
-	UploadEvaluatorProps,
 } from "okareo-ts-sdk";
-//import { CHECK_TYPE, register_checks } from '../tests/utils/check_utils';
-
-
-import * as core from "@actions/core";
+import * as fs from 'fs';
+import * as path from 'path';
 
 const OKAREO_API_KEY = process.env.OKAREO_API_KEY;
 
@@ -22,7 +19,6 @@ const UNIQUE_BUILD_ID = `local.${Date.now()}`;
 const PROJECT_NAME = "Global";
 const SCENARIO_SET_NAME = "Questions for LLM text generation";
 const USER_PROMPT_TEMPLATE = "{scenario_input}"
-//const SYSTEM_PROMPT_TEMPLATE = "Answer the following question."
 
 const BASE_MODEL_NAME = "Base Text Generator";
 const FINE_TUNED_MODEL_NAME = "Fine-Tuned Text Generator";
@@ -104,7 +100,7 @@ const main = async () => {
 		const project_id = project.find(p => p.name === PROJECT_NAME)?.id;
 
         // create scenario set
-        const TEST_SEED_DATA = [
+        const SCENARIO_SET_DATA = [
 		    SeedData({
 		        input:"How do I boil an egg?",  
 		        result:"" //we're doing reference-free metrics so we don't need to supply an example result
@@ -124,18 +120,36 @@ const main = async () => {
 		    SeedData({
 		        input:"What are the main anatomical features of a flower and what are they for?", 
 		        result:""
-		    })
+		    }),
+		    SeedData({
+		        input:"What is the airspeed velocity of an unladen swallow?", 
+		        result:""
+		    }),
+		    SeedData({
+		        input:"What is the meaning of life?", 
+		        result:""
+		    }),
+		    SeedData({
+		        input:"What is best in life?", 
+		        result:""
+		    }),
+		    SeedData({
+		        input:"Write a sonnet about a pickle jar.", 
+		        result:""
+		    }),
+		    SeedData({
+		        input:"Describe the features of iambic pentameter.", 
+		        result:""
+		    }),
 		];
 
         const scenario: any = await okareo.create_scenario_set(
             {
             	name: `${SCENARIO_SET_NAME} Scenario Set - ${UNIQUE_BUILD_ID}`,
             	project_id: project_id,
-	            seed_data: TEST_SEED_DATA
+	            seed_data: SCENARIO_SET_DATA
             }
         );
-
-        
 
 	    const model = await okareo.register_model({
 			name: BASE_MODEL_NAME,
@@ -158,41 +172,39 @@ const main = async () => {
 				type: "openai",
 				model_id:"ft:gpt-3.5-turbo-0125:wizard-on-demand::AXSgdIHf",
 				temperature:0.5,
-				//system_prompt_template:SYSTEM_PROMPT_TEMPLATE,
 				user_prompt_template:USER_PROMPT_TEMPLATE,
 			} as OpenAIModel,
 			update: true,
 		});
 		
-		//define new custom checks (by prompting an LLM judge)
-		const custom_checks: CHECK_TYPE[] = [
-				
-				
-				{
-					name:"custom.Archaic", 
-					description: "Use LLM-as-a-judge to rate how archaic the output is.",
-					prompt: "Output a score for how archaic the writing style of the following text is, on a scale of 1 (most modern) to 5 (most archaic). {output}",
-					output_data_type: CheckOutputType.SCORE,
-				},
-				{
-					name:"custom.Poetic", 
-					description: "Use LLM-as-a-judge to rate how poetic the output is.",
-					prompt: "Output a score for how poetic the writing style of the following text is, on a scale of 1 (most prosaic and ordinary) to 5 (most poetic). {output}",
-					output_data_type: CheckOutputType.SCORE,
-				},
-			];
+		// load the prompts for the model based checks
+		const archaicPrompt = fs.readFileSync(path.join(__dirname, '../flows/prompts/archaic.txt'), 'utf8');
+		const poeticPrompt = fs.readFileSync(path.join(__dirname, '../flows/prompts/poetic.txt'), 'utf8');
 
-			// register custom checks with Okareo
-			register_checks(okareo, project_id, custom_checks);
-			
-			
-			 // name the checks you will use with your evaluation
-	        const checks = [
-				
-				"fluency_summary", // Okareo native check
-				
-				...custom_checks.map(c => c.name), // custom checks
-			]
+		// define new custom checks (by prompting an LLM judge)
+		const custom_checks: CHECK_TYPE[] = [
+			{
+				name:"custom.Archaic", 
+				description: "Use LLM-as-a-judge to rate how archaic the output is.",
+				prompt: archaicPrompt,
+				output_data_type: CheckOutputType.SCORE,
+			},
+			{
+				name:"custom.Poetic", 
+				description: "Use LLM-as-a-judge to rate how poetic the output is. ",
+				prompt: poeticPrompt,
+				output_data_type: CheckOutputType.SCORE,
+			},
+		];
+
+		// register custom checks with Okareo
+		register_checks(okareo, project_id, custom_checks);
+
+		// name the checks you will use with your evaluation
+		const checks = [
+			"fluency_summary", // Okareo native check
+			...custom_checks.map(c => c.name), // custom checks
+		]
 
         // run LLM evaluation
 		const base_eval_run: components["schemas"]["TestRunItem"] = await model.run_test({
@@ -217,21 +229,10 @@ const main = async () => {
 			checks: checks
 		} as RunTestProps);
 		
-		
-		
-
-	
-		
-		
-		
-
-
 		// reporting
 		const report_definition = {
 			metrics_min: {
-				
 				"fluency": 4.0,
-				
 			}
 		};
 
@@ -240,22 +241,22 @@ const main = async () => {
 				...report_definition,
 		});
 
-		
 		// Print a direct link to the evaluation report in Okareo (for convenience)
-	console.log(`See base results in Okareo: ${base_eval_run.app_link}`);
+		console.log(`See base results in Okareo: ${base_eval_run.app_link}`);
 	
-	const ft_reporter = new GenerationReporter({
+		const ft_reporter = new GenerationReporter({
 				eval_run :ft_eval_run, 
 				...report_definition,
 		});
 
 		
 		// Print a direct link to the evaluation report in Okareo (for convenience)
-	console.log(`See fine-tuned results in Okareo: ${ft_eval_run.app_link}`);
+		console.log(`See fine-tuned results in Okareo: ${ft_eval_run.app_link}`);
+		
 		
 		
 	 } catch (error) {
-		core.setFailed("Evaluation failed because: " + error.message);
+		console.log("Evaluation failed because: " + error.message);
 	}
 }
 main();

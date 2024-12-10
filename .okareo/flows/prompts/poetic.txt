@@ -1,0 +1,6 @@
+Output a score for how poetic the writing style is, on a scale of 1 (most prosaic and ordinary) to 5 (most poetic). Poetic devices can include rhythm and meter, simile and metaphor, rhetorical questions, repetition, alliteration, elevated diction, and so on.
+
+Model Answer: 
+{generation} 
+
+Poetic Writing Style Score:

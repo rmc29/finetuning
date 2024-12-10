@@ -1,0 +1,6 @@
+Output a score for how archaic the writing style is, on a scale of 1 (most modern) to 5 (most archaic).
+
+Model answer:
+{generation}
+
+Archaic Writing Style Score: 
