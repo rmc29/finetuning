@@ -1,6 +1,6 @@
 Evaluating a fine-tuned LLM with Okareo
 =======================================
-
+Instructions:
 * Download complete works of Shakespeare from Gutenberg https://www.gutenberg.org/ebooks/100
 * Manually delete front and end matter and divide into 3 sections: [plays](plays.txt), [sonnets](sonnets.txt), and [other verse](verse.txt)
 * Use [split_shakespeare script](split_shakespeare.py) to split into lots of individual sections
